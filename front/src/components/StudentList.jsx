@@ -44,16 +44,15 @@ const initialRows = [
 
 const StudentList = () => {
 
-  axios.defaults.baseURL="http://127.0.0.1:8000";
+  axios.defaults.baseURL = "http://127.0.0.1:8000";
 
-
-  useEffect(()=>{
-    const fetchData = async ()=>{
+  useEffect(() => {
+    const fetchData = async () => {
       const response = await axios.get('/students');
       setRows(response.data);
     }
     fetchData()
-  },[]);
+  }, []);
   const tableBodyRef = useRef();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -83,16 +82,16 @@ const StudentList = () => {
     setEditRow(row);
   };
 
-  const handleDeleteRow =async (id) => {
+  const handleDeleteRow = async (id) => {
     const updatedRows = rows.filter((row) => row.id !== id);
-    try{
+    try {
       await axios.delete(`/students/${id}`);
       setRows(updatedRows);
       const lastPage = Math.ceil(updatedRows.length / rowsPerPage) - 1;
       if (page > lastPage) {
         setPage(lastPage);
       }
-    }catch(e){
+    } catch (e) {
       console.log(e);
     }
   };
@@ -105,9 +104,9 @@ const StudentList = () => {
       age: 0,
       major: "",
     };
-  
+
     try {
-      const response = await axios.post("/students", null, { params : newRow });
+      const response = await axios.post("/students", null, { params: newRow });
       const savedStudent = response.data;
       const updatedRows = [...rows, savedStudent];
       setRows(updatedRows);
@@ -117,7 +116,6 @@ const StudentList = () => {
       console.log(e);
     }
   };
-  
 
   const handleInputChange = (e, column) => {
     setEditRow({ ...editRow, [column]: e.target.value });
@@ -125,17 +123,19 @@ const StudentList = () => {
 
   const handleSaveRow = async () => {
     if (!editRow.id) return;
-  
+
     try {
-      await axios.put(`/students/${editRow.id}`, null,{params:{
-        id : editRow.id,
-        first_name: editRow.first_name,
-        last_name: editRow.last_name,
-        email: editRow.email,
-        age: editRow.age,
-        major: editRow.major,
-      }});
-  
+      await axios.put(`/students/${editRow.id}`, null, {
+        params: {
+          id: editRow.id,
+          first_name: editRow.first_name,
+          last_name: editRow.last_name,
+          email: editRow.email,
+          age: editRow.age,
+          major: editRow.major,
+        }
+      });
+
       const updatedRows = rows.map((row) => (row.id === editRow.id ? editRow : row));
       setRows(updatedRows);
       setToEditRow(null);
@@ -143,8 +143,18 @@ const StudentList = () => {
       console.log(e);
     }
   };
-  
-  
+
+  const [mousePOS, setMousePOS] = useState({ x: 0, y: 0 });
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleMouseOver = (e) => {
+    setMousePOS({ x: e.clientX, y: e.clientY });
+    setShowTooltip(true);
+  };
+
+  const handleMouseOut = () => {
+    setShowTooltip(false);
+  };
 
   return (
     <div className="container">
@@ -172,7 +182,15 @@ const StudentList = () => {
             </TableHead>
             <TableBody>
               {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.id} onDoubleClick={() => handleEditRow(row)}>
+                <TableRow
+                  hover
+                  role="checkbox"
+                  tabIndex={-1}
+                  key={row.id}
+                  onDoubleClick={() => handleEditRow(row)}
+                  onMouseOver={(e) => handleMouseOver(e)}
+                  onMouseOut={handleMouseOut}
+                >
                   {columns.map((column) => {
                     if (column.id === 'options') {
                       return (
@@ -221,6 +239,23 @@ const StudentList = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+      {showTooltip && toEditRow === null && (
+        <div
+          style={{
+            position: "fixed",
+            top: mousePOS.y + 10,
+            left: mousePOS.x + 10,
+            backgroundColor: "black",
+            color: "white",
+            padding: "5px 10px",
+            borderRadius: "5px",
+            fontSize: "12px",
+            zIndex: 1000,
+          }}
+        >
+          Double click to edit
+        </div>
+      )}
     </div>
   );
 };
