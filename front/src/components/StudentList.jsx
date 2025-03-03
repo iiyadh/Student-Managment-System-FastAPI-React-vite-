@@ -57,7 +57,7 @@ const StudentList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [toEditRow, setToEditRow] = useState(null);
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRows] = useState([]);
   const [editRow, setEditRow] = useState({
     id: "",
     first_name: "",
@@ -82,18 +82,8 @@ const StudentList = () => {
     setEditRow(row);
   };
 
-  const handleDeleteRow = async (id) => {
-    const updatedRows = rows.filter((row) => row.id !== id);
-    try {
-      await axios.delete(`/students/${id}`);
-      setRows(updatedRows);
-      const lastPage = Math.ceil(updatedRows.length / rowsPerPage) - 1;
-      if (page > lastPage) {
-        setPage(lastPage);
-      }
-    } catch (e) {
-      console.log(e);
-    }
+  const handleInputChange = (e, column) => {
+    setEditRow({ ...editRow, [column]: e.target.value });
   };
 
   const handleAddRow = async () => {
@@ -104,9 +94,9 @@ const StudentList = () => {
       age: 0,
       major: "",
     };
-
+  
     try {
-      const response = await axios.post("/students", null, { params: newRow });
+      const response = await axios.post("/students", newRow);
       const savedStudent = response.data;
       const updatedRows = [...rows, savedStudent];
       setRows(updatedRows);
@@ -116,29 +106,29 @@ const StudentList = () => {
       console.log(e);
     }
   };
-
-  const handleInputChange = (e, column) => {
-    setEditRow({ ...editRow, [column]: e.target.value });
-  };
-
+  
   const handleSaveRow = async () => {
     if (!editRow.id) return;
-
+  
     try {
-      await axios.put(`/students/${editRow.id}`, null, {
-        params: {
-          id: editRow.id,
-          first_name: editRow.first_name,
-          last_name: editRow.last_name,
-          email: editRow.email,
-          age: editRow.age,
-          major: editRow.major,
-        }
-      });
-
+      await axios.put(`/students/${editRow.id}`, editRow); // Send data in request body
       const updatedRows = rows.map((row) => (row.id === editRow.id ? editRow : row));
       setRows(updatedRows);
       setToEditRow(null);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  
+  const handleDeleteRow = async (id) => {
+    try {
+      await axios.delete(`/students/${id}`);
+      const updatedRows = rows.filter((row) => row.id !== id);
+      setRows(updatedRows);
+      const lastPage = Math.ceil(updatedRows.length / rowsPerPage) - 1;
+      if (page > lastPage) {
+        setPage(lastPage);
+      }
     } catch (e) {
       console.log(e);
     }
