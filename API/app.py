@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import motor.motor_asyncio
 from pydantic import BaseModel
 from bson import ObjectId
-from typing import List
+
+from pymongo import ReturnDocument
 
 app = FastAPI()
 
@@ -28,9 +29,6 @@ class Student(BaseModel):
     age: int
     major: str
 
-class StudentInDB(Student):
-    id: str
-
 # Helper function to convert MongoDB documents
 def student_serializer(student) -> dict:
     return {
@@ -43,20 +41,20 @@ def student_serializer(student) -> dict:
     }
 
 # Create a Student
-@app.post("/students", response_model=StudentInDB)
+@app.post("/students")
 async def add_student(student: Student):
     new_student = await student_collection.insert_one(student.dict())
     created_student = await student_collection.find_one({"_id": new_student.inserted_id})
     return student_serializer(created_student)
 
 # Read All Students
-@app.get("/students", response_model=List[StudentInDB])
+@app.get("/students")
 async def find_all_students():
     students = await student_collection.find().to_list(100)
     return [student_serializer(student) for student in students]
 
 # Read One Student
-@app.get("/students/{id}", response_model=StudentInDB)
+@app.get("/students/{id}")
 async def find_student(id: str):
     student = await student_collection.find_one({"_id": ObjectId(id)})
     if student:
@@ -64,7 +62,7 @@ async def find_student(id: str):
     raise HTTPException(status_code=404, detail="Student not found")
 
 # Update a Student
-@app.put("/students/{id}", response_model=StudentInDB)
+@app.put("/students/{id}")
 async def update_student(id: str, student: Student):
     updated_student = await student_collection.find_one_and_update(
         {"_id": ObjectId(id)},

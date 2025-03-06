@@ -25,23 +25,6 @@ const columns = [
   { id: 'options', label: '', minWidth: 75, align: 'right' },
 ];
 
-function createData(id, first_name, last_name, email, age, major) {
-  return { id, first_name, last_name, email, age, major };
-}
-
-const initialRows = [
-  createData(1, "Alice", "Johnson", "alice@example.com", 22, "Math"),
-  createData(2, "Bob", "Smith", "bob@example.com", 24, "Physics"),
-  createData(3, "Charlie", "Brown", "charlie@example.com", 21, "Computer Science"),
-  createData(4, "David", "Williams", "david@example.com", 23, "Biology"),
-  createData(5, "Emma", "Davis", "emma@example.com", 22, "Chemistry"),
-  createData(6, "Frank", "Miller", "frank@example.com", 25, "Engineering"),
-  createData(7, "Grace", "Taylor", "grace@example.com", 20, "History"),
-  createData(8, "Hannah", "Anderson", "hannah@example.com", 22, "Literature"),
-  createData(9, "Ian", "Thomas", "ian@example.com", 23, "Philosophy"),
-  createData(10, "Julia", "Martinez", "julia@example.com", 21, "Economics"),
-];
-
 const StudentList = () => {
 
   axios.defaults.baseURL = "http://127.0.0.1:8000";
@@ -53,6 +36,7 @@ const StudentList = () => {
     }
     fetchData()
   }, []);
+
   const tableBodyRef = useRef();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -102,6 +86,7 @@ const StudentList = () => {
       setRows(updatedRows);
       handleEditRow(savedStudent);
       setPage(Math.ceil(updatedRows.length / rowsPerPage) - 1);
+      tableBodyRef.current.scrollTop = tableBodyRef.current.scrollHeight;
     } catch (e) {
       console.log(e);
     }
@@ -111,7 +96,7 @@ const StudentList = () => {
     if (!editRow.id) return;
   
     try {
-      await axios.put(`/students/${editRow.id}`, editRow); // Send data in request body
+      await axios.put(`/students/${editRow.id}`, editRow);
       const updatedRows = rows.map((row) => (row.id === editRow.id ? editRow : row));
       setRows(updatedRows);
       setToEditRow(null);
